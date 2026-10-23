@@ -5,7 +5,8 @@ self.onmessage = ({data}) => {
     if (data.type === 'init') { encoder = GIFEncoder(); self.postMessage({type:'ready'}); }
     if (data.type === 'frame') {
       const pixels = new Uint8Array(data.pixels);
-      const format=data.transparent?'rgba4444':'rgb565';
+      let hasAlpha=false;if(data.transparent){for(let i=3;i<pixels.length;i+=4){if(pixels[i]<128){hasAlpha=true;break}}}
+      const format=hasAlpha?'rgba4444':'rgb565';
       const palette = quantize(pixels, data.colors, {format,oneBitAlpha:true});
       const indexed = applyPalette(pixels, palette, format);
       const transparentIndex=data.transparent?palette.findIndex(color=>color[3]===0):-1;
