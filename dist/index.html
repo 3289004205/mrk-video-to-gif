@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f7f8fa"><meta name="description" content="在浏览器本地将视频抽帧并压缩为 GIF，支持 1、2.9、5、10 MB 文件上限。"><title>MRK 视频转Gif</title><link rel="stylesheet" href="./style.css"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f7f8fa"><meta name="description" content="在浏览器本地将视频抽帧转为 GIF，选择画面尺寸和帧率即可预估文件大小。"><title>MRK 视频转Gif</title><link rel="stylesheet" href="./style.css"></head>
 <body>
 <main>
 <h1 class="app-title">MRK 视频转Gif</h1>
@@ -17,15 +17,14 @@
 <div class="frames-bottom"><div><span class="tiny-icon">▦</span><span>想留住某一帧？</span></div><button id="extractBtn" class="text-btn" disabled>抽取画面帧 ↗</button></div>
 </section>
 <aside class="settings"><div class="panel-title"><h2><span class="step">02</span> GIF 导出设置</h2><span class="subtle">为分享而生</span></div>
-<div class="setting-block"><div class="section-row"><label class="setting-label">目标文件大小</label><span class="orange-pill">智能压缩</span></div><div class="size-options" role="group" aria-label="目标文件大小"><button data-size="1">1 <span>MB</span></button><button data-size="2.9" class="active" aria-pressed="true">2.9 <span>MB</span><i>推荐</i></button><button data-size="5">5 <span>MB</span></button><button data-size="10">10 <span>MB</span></button></div><p class="hint">以所选大小为上限，自动平衡清晰度与体积。</p></div>
 <div class="setting-block"><div class="section-row"><label for="widthSelect" class="setting-label">画面尺寸</label><span id="dimensionHint" class="subtle">保持原始比例</span></div><select id="widthSelect"><option value="480">标准 · 480 px 宽</option><option value="320">轻巧 · 320 px 宽</option><option value="640">清晰 · 640 px 宽</option><option value="960">高清 · 960 px 宽</option><option value="1280">超清 · 1280 px 宽</option><option value="custom">自定义宽度…</option></select><div id="customWrap" hidden class="custom-width"><input id="customWidth" type="number" min="160" max="1280" value="480" aria-label="自定义宽度"><span>px · 160–1280</span></div></div>
 <div class="setting-block"><div class="section-row"><label class="setting-label" for="fpsRange">抽帧帧率</label><strong id="fpsValue">10 <span>FPS</span></strong></div><input id="fpsRange" type="range" min="5" max="24" value="10"><div class="range-labels"><span>体积更小</span><span>动作更流畅</span></div></div>
 <div class="loop-row"><div><label class="setting-label" for="loopToggle">循环播放</label><p class="hint">让 GIF 不断重复播放</p></div><label class="switch"><input id="loopToggle" type="checkbox" checked><span></span></label></div>
-<div class="export-summary"><span>预计抽取 <b id="frameEstimate">—</b> 帧</span><span>≤ <b id="targetLabel">2.9 MB</b></span></div>
+<div class="size-estimate" aria-live="polite"><div><span>预估 GIF 大小</span><strong id="sizeEstimate">—</strong></div><p id="estimateHint">导入视频后，根据尺寸、帧率和片段内容预估</p></div><div class="export-summary"><span>预计抽取 <b id="frameEstimate">—</b> 帧</span><span>按所选参数导出</span></div>
 <button id="generateBtn" class="primary generate" disabled><span>✦</span> 生成 GIF <span>→</span></button><button id="cancelBtn" class="text-btn cancel" hidden>取消处理</button><div id="progressWrap" hidden><div class="progress-track"><div id="progressBar"></div></div></div><p id="status" class="status" role="status" aria-live="polite">导入视频后，就可以开始了</p>
 </aside>
 </div>
-<section id="result" class="result" hidden><div class="panel-title"><h2><span class="step">03</span> 你的 GIF 已就绪</h2><span class="success-tag">✓ 已符合文件大小上限</span></div><div class="result-content"><div class="gif-background"><img id="gifPreview" alt="生成的 GIF 预览"></div><div class="result-details"><div class="eyebrow">READY TO SHARE</div><h3>精彩，现在可以循环了。</h3><p id="resultMeta"></p><p id="compressionNote" class="hint"></p><a id="downloadBtn" class="primary" download="framegif.gif">↓ 下载 GIF</a></div></div></section>
+<section id="result" class="result" hidden><div class="panel-title"><h2><span class="step">03</span> 你的 GIF 已就绪</h2><span class="success-tag">✓ 转换完成</span></div><div class="result-content"><div class="gif-background"><img id="gifPreview" alt="生成的 GIF 预览"></div><div class="result-details"><div class="eyebrow">READY TO SHARE</div><h3>精彩，现在可以循环了。</h3><p id="resultMeta"></p><p id="outputNote" class="hint"></p><a id="downloadBtn" class="primary" download="framegif.gif">↓ 下载 GIF</a></div></div></section>
 <section id="framesPanel" class="result" hidden><div class="panel-title"><h2>画面帧 <span class="subtle">点击任意画面下载原尺寸 PNG</span></h2><button id="closeFrames" class="text-btn">收起 ×</button></div><div id="framesGrid" class="frames-grid"></div></section>
 </main>
 <script type="module" src="./app.js"></script>
