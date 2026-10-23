@@ -1,7 +1,7 @@
 import { inspectGif, GifSource } from './gif-source.js';
-import { createComposer, paintComposition } from './composition.js?v=6.1';
+import { createComposer, paintComposition } from './composition.js?v=7';
 const $ = id => document.getElementById(id);
-const state = {file:null, url:null, mode:"video", gif:null, width:0, height:0, duration:0, busy:false, controller:null, gifUrl:null, thumbs:[], frames:[], thumbToken:0};
+const state = {file:null, url:null, mode:"video", gif:null, width:0, height:0, duration:0, busy:false, controller:null, gifUrl:null};
 const video=$('video');
 const composer=createComposer({onChange:()=>invalidate(),onStatus:status,isBusy:()=>state.busy});
 const mb = n => n<1000000?(n/1000).toFixed(1)+' KB':(n/1000000).toFixed(2)+' MB';
@@ -11,23 +11,23 @@ function eventOnce(el,event,signal,timeout=20000){return new Promise((resolve,re
 async function sampler(signal){if(state.gif)return new GifSource(state.gif);const v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='auto';const ready=eventOnce(v,'loadeddata',signal);v.src=state.url;v.load();try{await ready;return v}catch(e){disposeVideo(v);throw e}}
 function disposeVideo(v){if(v.dispose){v.dispose();return}v.pause();v.removeAttribute('src');v.load()}
 async function seek(v,t,signal){if(v.seek)return v.seek(t,signal);if(signal?.aborted)throw abortError();t=Math.max(0,Math.min(t,Math.max(0,v.duration-.001)));if(Math.abs(v.currentTime-t)<.0001&&v.readyState>=2)return;const done=eventOnce(v,'seeked',signal);v.currentTime=t;await done;if(v.readyState<2)await eventOnce(v,'loadeddata',signal)}
-function range(){const start=Number($('startTime').value),end=Number($('endTime').value);if(!state.file)throw new Error('请先导入文件。');if(!Number.isFinite(start)||!Number.isFinite(end)||start<0||end>state.duration+.02||end<=start)throw new Error('请设置有效的起止时间，结束时间必须大于起始时间。');if(end-start>60.01)throw new Error('单次最多转换 60 秒，请缩短截取片段。');return {start,end,duration:end-start}}
+function range(){if(!state.file)throw new Error('请先导入文件。');if(!Number.isFinite(state.duration)||state.duration<=0)throw new Error('文件时长无效。');return {start:0,end:state.duration,duration:state.duration}}
 let estimateTimer, estimateController, estimateKey=null;
 function stopEstimate(){clearTimeout(estimateTimer);estimateKey=null;if(estimateController){estimateController.abort();estimateController=null}}
 function scheduleEstimate(){
   if(state.busy)return;
   let r,d,fps;
-  try{r=range();d=composer.dimensions();composer.snapshot();fps=Number($('fpsRange').value)}catch{stopEstimate();estimateKey=null;$('sizeEstimate').textContent='—';$('estimateHint').textContent=state.file?'请设置有效的片段和画面尺寸':'导入文件后，根据尺寸、帧率和片段内容预估';return}
+  try{r=range();d=composer.dimensions();composer.snapshot();fps=Number($('fpsRange').value)}catch{stopEstimate();estimateKey=null;$('sizeEstimate').textContent='—';$('estimateHint').textContent=state.file?'请设置有效的画布尺寸':'导入文件后，根据尺寸、帧率和素材内容预估';return}
   const key=JSON.stringify([state.url,r.start,r.end,d.width,d.height,fps,selectedColors(),composer.key()]);if(key===estimateKey)return;
   stopEstimate();estimateKey=key;
-  $('sizeEstimate').textContent='正在预估…';$('estimateHint').textContent='正在采样片段画面，估算 GIF 编码体积';
+  $('sizeEstimate').textContent='正在预估…';$('estimateHint').textContent='正在采样素材画面，估算 GIF 编码体积';
   estimateTimer=setTimeout(()=>estimateSize(r,{...d,fps,colors:selectedColors(),layout:composer.snapshot()},key),400);
 }
 async function estimateSize(r,opts,key){
   const controller=new AbortController();estimateController=controller;const {signal}=controller;
   let v,worker;
   try{
-    v=await sampler(signal);worker=new Worker(new URL('./encoder-worker.js?v=6.1',import.meta.url),{type:'module'});
+    v=await sampler(signal);worker=new Worker(new URL('./encoder-worker.js?v=7',import.meta.url),{type:'module'});
     await workerCall(worker,{type:'init'},signal);
     const count=Math.max(1,Math.ceil(r.duration*opts.fps)),samples=Math.min(5,count);
     const canvas=document.createElement('canvas');canvas.width=opts.width;canvas.height=opts.height;
@@ -42,29 +42,24 @@ async function estimateSize(r,opts,key){
     if(signal.aborted||key!==estimateKey)return;
     const estimate=Math.max(bytes.byteLength,Math.round((bytes.byteLength-32)*count/samples+32));
     $('sizeEstimate').textContent='约 '+mb(estimate);
-    $('estimateHint').textContent='根据片段画面采样估算，实际大小以导出结果为准';
+    $('estimateHint').textContent='根据完整素材采样估算，实际大小以导出结果为准';
   }catch(e){if(e.name!=='AbortError'&&key===estimateKey){$('sizeEstimate').textContent='暂无法预估';$('estimateHint').textContent='可以直接生成 GIF 查看实际大小'}}
   finally{worker?.terminate();if(v)disposeVideo(v);if(estimateController===controller)estimateController=null}
 }
 function update(){
   scheduleEstimate();let r,d;try{r=range();d=composer.dimensions();composer.snapshot()}catch{}
   $('frameEstimate').textContent=r?Math.ceil(r.duration*Number($('fpsRange').value)):'—';
-  $('durationBadge').textContent=r?r.duration.toFixed(1)+' 秒':'等待导入';
   $('fpsValue').innerHTML=$('fpsRange').value+' <span>FPS</span>';
   $('generateBtn').disabled=!state.file||state.busy||!r||!d||composer.pending;
-  $('extractBtn').disabled=!state.file||state.busy||composer.pending;
   try{const size=composer.dimensions();$('dimensionHint').textContent=size.width+' × '+size.height}catch{$('dimensionHint').textContent='请填写有效宽高'}
 }
 function setBusy(busy){
   state.busy=busy;if(busy)stopEstimate();document.body.classList.toggle('busy',busy);
-  for(const id of ['startTime','endTime','fileInput','replaceBtn','chooseBtn','fpsRange','loopToggle','colorsSelect','videoMode','gifMode'])$(id).disabled=busy||(!state.file&&['startTime','endTime'].includes(id));
+  for(const id of ['fileInput','replaceBtn','chooseBtn','fpsRange','loopToggle','colorsSelect','videoMode','gifMode'])$(id).disabled=busy;
   composer.setBusy();$('cancelBtn').hidden=!busy;$('progressWrap').hidden=!busy;update();
 }
 function progress(n,text){$('progressBar').style.width=Math.max(0,Math.min(100,n))+'%';status(text)}
-function revokeList(key){state[key].forEach(URL.revokeObjectURL);state[key]=[]}
-function blobFromCanvas(canvas){return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('画面导出失败。')),'image/png'))}
 function selectedColors(){return state.mode==='gif'?Number($('colorsSelect').value):256}
-function drawSource(ctx,source,width,height){ctx.clearRect(0,0,width,height);ctx.drawImage(source.surface||source,0,0,width,height)}
 function setMode(mode){
   state.mode=mode;const gif=mode==='gif';
   $('videoMode').classList.toggle('selected',!gif);$('gifMode').classList.toggle('selected',gif);
@@ -78,13 +73,11 @@ function setMode(mode){
   $('stageBadge').textContent='导出画布';
 }
 function clearSource(){
-  stopEstimate();clearTimeout(thumbTimer);state.thumbToken++;video.pause();
+  stopEstimate();video.pause();
   if(state.url)URL.revokeObjectURL(state.url);if(state.gifUrl)URL.revokeObjectURL(state.gifUrl);
   state.file=null;state.gif=null;state.url=null;state.gifUrl=null;state.width=0;state.height=0;state.duration=0;composer.setSource(0,0,false);
   video.removeAttribute('src');video.load();$('sourceGifPreview').removeAttribute('src');
-  revokeList('thumbs');revokeList('frames');$('filmstrip').replaceChildren();for(let i=0;i<6;i++)$('filmstrip').append(document.createElement('div'));
-  $('result').hidden=true;$('framesPanel').hidden=true;$('videoArea').hidden=true;$('dropzone').hidden=false;$('replaceBtn').hidden=true;$('emptyTag').hidden=false;
-  $('startTime').value=0;$('endTime').value=5;
+  $('result').hidden=true;$('videoArea').hidden=true;$('dropzone').hidden=false;$('replaceBtn').hidden=true;$('emptyTag').hidden=false;
 }
 for(const [id,mode] of [['videoMode','video'],['gifMode','gif']])$(id).onclick=()=>{if(state.busy||state.mode===mode)return;clearSource();setMode(mode);setBusy(false);status(mode==='gif'?'导入 GIF 后，调整参数即可改变文件大小':'导入视频后，就可以开始了')};
 async function loadFile(file){
@@ -107,24 +100,18 @@ async function loadFile(file){
     if(signal.aborted)throw abortError();state.file=file;composer.setSource(state.width,state.height,isGif);
     $('dropzone').hidden=true;$('videoArea').hidden=false;$('replaceBtn').hidden=false;$('emptyTag').hidden=true;
     $('fileName').textContent=file.name;$('fileMeta').textContent=state.width+' × '+state.height+' · '+state.duration.toFixed(2)+' 秒 · '+(isGif?state.gif.count+' 帧 · ':'')+mb(file.size);
-    $('startTime').value=0;$('endTime').value=Math.floor(Math.min(isGif?60:5,state.duration)*1000)/1000;
-    for(const id of ['startTime','endTime'])$(id).max=state.duration;
-    status(isGif?'GIF 已就绪，调低尺寸、帧率或颜色数量通常可减小体积':'视频已就绪，选择片段后即可生成');
+    status(isGif?'GIF 已就绪，将转换完整动画，可调整画布与叠图':'视频已就绪，将转换完整视频，可调整画布与叠图');
   }catch(e){clearSource();status(e.name==='AbortError'?'已取消读取':isGif?'GIF 读取失败：'+e.message:e.message,e.name!=='AbortError')}
-  finally{state.controller=null;setBusy(false);if(state.file)makeThumbnails()}
+  finally{state.controller=null;setBusy(false)}
 }
-async function makeThumbnails(){const token=++state.thumbToken;let v;try{const r=range();v=await sampler();const c=document.createElement('canvas');c.width=160;c.height=Math.max(2,Math.round(160*v.videoHeight/v.videoWidth));const ctx=c.getContext('2d');const urls=[];for(let i=0;i<6;i++){if(token!==state.thumbToken)return;await seek(v,r.start+(r.duration*.99)*i/5);drawSource(ctx,v,c.width,c.height);const blob=await blobFromCanvas(c);if(token!==state.thumbToken)return;const url=URL.createObjectURL(blob);urls.push(url);state.thumbs.push(url)}if(token!==state.thumbToken)return;const strip=$('filmstrip');strip.replaceChildren();for(const url of urls){const wrap=document.createElement('div'),img=new Image();img.src=url;img.alt='片段预览帧';wrap.append(img);strip.append(wrap)}}catch{}finally{if(v)disposeVideo(v)}}
-function invalidate(){if(state.busy)return;$('result').hidden=true;$('framesPanel').hidden=true;update()}
+function invalidate(){if(state.busy)return;$('result').hidden=true;update()}
 for(const id of ['fpsRange','loopToggle','colorsSelect'])$(id).addEventListener('input',invalidate);
-let thumbTimer;
-for(const id of ['startTime','endTime'])$(id).addEventListener('input',()=>{invalidate();state.thumbToken++;clearTimeout(thumbTimer);thumbTimer=setTimeout(()=>{revokeList('thumbs');makeThumbnails()},450)});
 $('dropzone').onclick=()=>{if(!state.busy)$('fileInput').click()};$('dropzone').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!state.busy)$('fileInput').click()}};$('chooseBtn').onclick=e=>{e.stopPropagation();$('fileInput').click()};$('replaceBtn').onclick=()=>$('fileInput').click();$('fileInput').onchange=e=>{loadFile(e.target.files[0]);e.target.value=''};
 for(const name of ['dragenter','dragover'])$('dropzone').addEventListener(name,e=>{e.preventDefault();$('dropzone').classList.add('dragover')});for(const name of ['dragleave','drop'])$('dropzone').addEventListener(name,e=>{e.preventDefault();$('dropzone').classList.remove('dragover')});$('dropzone').addEventListener('drop',e=>loadFile(e.dataTransfer.files[0]));
-$('closeFrames').onclick=()=>$('framesPanel').hidden=true;
 $('cancelBtn').onclick=()=>state.controller?.abort();
 function workerCall(worker,data,signal,transfer=[]){return new Promise((resolve,reject)=>{const cleanup=()=>{clearTimeout(timer);worker.removeEventListener('message',message);worker.removeEventListener('error',error);signal.removeEventListener('abort',abort)};const message=e=>{cleanup();if(e.data.type==='error')reject(new Error(e.data.message));else resolve(e.data)};const error=e=>{cleanup();reject(new Error(e.message||'GIF 编码器无法启动，请刷新后重试。'))};const abort=()=>{cleanup();reject(abortError())};const timer=setTimeout(()=>{cleanup();reject(new Error('编码超时，请缩短片段或减小画面尺寸。'))},90000);worker.addEventListener('message',message,{once:true});worker.addEventListener('error',error,{once:true});signal.addEventListener('abort',abort,{once:true});if(signal.aborted){abort();return}worker.postMessage(data,transfer)})}
 async function encode(v,r,opts,signal){
-  const worker=new Worker(new URL('./encoder-worker.js?v=6.1',import.meta.url),{type:'module'});
+  const worker=new Worker(new URL('./encoder-worker.js?v=7',import.meta.url),{type:'module'});
   const canvas=document.createElement('canvas');canvas.width=opts.width;canvas.height=opts.height;
   const ctx=canvas.getContext('2d',{willReadFrequently:true});
   const count=Math.max(1,Math.ceil(r.duration*opts.fps));
@@ -156,5 +143,4 @@ $('generateBtn').onclick=async()=>{
   }catch(e){status(e.name==='AbortError'?'已取消，可以调整参数后重试':e.message,e.name!=='AbortError')}
   finally{if(v)disposeVideo(v);state.controller=null;setBusy(false)}
 };
-$('extractBtn').onclick=async()=>{let v;try{const r=range();state.controller=new AbortController();const {signal}=state.controller;setBusy(true);video.pause();revokeList('frames');$('framesGrid').replaceChildren();$('framesPanel').hidden=true;progress(0,'正在抽取原尺寸画面帧…');v=await sampler(signal);const canvas=document.createElement('canvas');canvas.width=v.videoWidth;canvas.height=v.videoHeight;const ctx=canvas.getContext('2d');for(let i=0;i<8;i++){const t=r.start+r.duration*.99*i/7;await seek(v,t,signal);drawSource(ctx,v,canvas.width,canvas.height);const blob=await blobFromCanvas(canvas);if(signal.aborted)throw abortError();const url=URL.createObjectURL(blob);state.frames.push(url);const a=document.createElement('a');a.href=url;a.download=state.file.name.replace(/\.[^.]+$/,'')+'_'+t.toFixed(2)+'s.png';a.className='frame-link';const img=new Image();img.src=url;img.alt=t.toFixed(2)+' 秒画面';const span=document.createElement('span');span.textContent=t.toFixed(2)+' 秒 · 下载 PNG ↓';a.append(img,span);$('framesGrid').append(a);progress((i+1)/8*100,`正在抽帧 ${i+1} / 8`)}$('framesPanel').hidden=false;status('已抽取 8 张原尺寸 PNG，点击画面即可下载');$('framesPanel').scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){revokeList('frames');$('framesGrid').replaceChildren();status(e.name==='AbortError'?'已取消抽帧':e.message,e.name!=='AbortError')}finally{if(v)disposeVideo(v);state.controller=null;setBusy(false)}};
 update();
