@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f7f8fa"><meta name="description" content="在浏览器本地将视频抽帧并压缩为 GIF，支持 1、2.9、5、10 MB 文件上限。"><title>帧间 FrameGIF · 让精彩循环</title><link rel="stylesheet" href="./style.css"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f7f8fa"><meta name="description" content="在浏览器本地将视频抽帧并压缩为 GIF，支持 1、2.9、5、10 MB 文件上限。"><title>MRK 视频转Gif</title><link rel="stylesheet" href="./style.css"></head>
 <body>
-<header class="topbar"><a class="brand" href="./"><span class="brand-icon">▰</span> 帧间 <span class="brand-en">/ FrameGIF</span></a><div class="privacy"><i></i> 本地处理，视频无需上传</div><button id="helpBtn" class="text-btn">使用指南 <span>↗</span></button></header>
 <main>
-<section class="intro"><div><div class="eyebrow"><span></span> VIDEO TO GIF STUDIO</div><h1>让精彩，<span>循环发生。</span></h1><p>从视频中留下喜欢的一段，轻松变成刚刚好的 GIF。</p></div><div class="intro-note"><span>01 — 03</span><p>导入视频 <b>→</b> 调整参数 <b>→</b> 导出 GIF</p></div></section>
+<h1 class="app-title">MRK 视频转Gif</h1>
 <div class="workspace">
 <section class="editor">
 <div class="panel-title"><h2><span class="step">01</span> 视频工作区</h2><button id="replaceBtn" class="text-btn" hidden>↻ 更换视频</button><span id="emptyTag" class="subtle">准备好你的灵感</span></div>
@@ -28,9 +27,6 @@
 </div>
 <section id="result" class="result" hidden><div class="panel-title"><h2><span class="step">03</span> 你的 GIF 已就绪</h2><span class="success-tag">✓ 已符合文件大小上限</span></div><div class="result-content"><div class="gif-background"><img id="gifPreview" alt="生成的 GIF 预览"></div><div class="result-details"><div class="eyebrow">READY TO SHARE</div><h3>精彩，现在可以循环了。</h3><p id="resultMeta"></p><p id="compressionNote" class="hint"></p><a id="downloadBtn" class="primary" download="framegif.gif">↓ 下载 GIF</a></div></div></section>
 <section id="framesPanel" class="result" hidden><div class="panel-title"><h2>画面帧 <span class="subtle">点击任意画面下载原尺寸 PNG</span></h2><button id="closeFrames" class="text-btn">收起 ×</button></div><div id="framesGrid" class="frames-grid"></div></section>
-<section class="features"><div><span class="feature-icon">⌘</span><div><h3>你的素材，只属于你</h3><p>全部转换在设备本地完成</p></div></div><div><span class="feature-icon">◈</span><div><h3>大小刚好，分享自由</h3><p>四档体积预设，自动适配压缩</p></div></div><div><span class="feature-icon">↗</span><div><h3>从瞬间，到无限</h3><p>截取片段、独立抽帧、循环播放</p></div></div></section>
-<footer><span>帧间 FrameGIF</span><span>把值得回看的瞬间，留在循环里。</span><span>MADE FOR YOUR MOMENTS</span></footer>
 </main>
-<dialog id="helpDialog"><div class="dialog-top"><h2>三步，让视频动起来</h2><button id="closeHelp" class="text-btn" aria-label="关闭使用指南">×</button></div><ol><li>选择视频或将文件拖入工作区。</li><li>选择起止时间、GIF 宽度和帧率，文件上限默认 2.9 MB。</li><li>点击「生成 GIF」，预览后下载。需要静态图时点击「抽取画面帧」。</li></ol><p>压缩时可能降低帧率或尺寸，最终参数会显示在结果中。视频不上传，刷新页面会清除当前结果。遇到无法解码的视频，可先转成 H.264 MP4 再试。</p></dialog>
 <script type="module" src="./app.js"></script>
 </body></html>
