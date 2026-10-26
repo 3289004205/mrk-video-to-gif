@@ -54,10 +54,16 @@ export function createComposer({onChange,onStatus,isBusy}){
       if(document.activeElement!==$(id))$(id).value=Math.round(value*10)/10;
     }
     $('dimensionHint').textContent=d.width+' × '+d.height;
+    const percentages=[100,75,50,25];
+    const match=percentages.find(p=>sourceWidth&&$('ratioSelect').value==='original'&&d.width===Math.round(sourceWidth*p/100)&&d.height===Math.round(sourceHeight*p/100));
+    $('originalScale').value=match?String(match):'';
   }
   function syncDisabled(){
     let invalid=false;try{dimensions()}catch{invalid=true}
     for(const id of controlIds)$(id).disabled=isBusy()||pending;
+    $('originalScale').disabled=isBusy()||pending||!sourceWidth;
+    const {min,max}=canvasLimits();
+    for(const option of $('originalScale').options){const p=Number(option.value);if(p){const w=Math.round(sourceWidth*p/100),h=Math.round(sourceHeight*p/100);option.disabled=w<min||h<min||w>max||h>max}}
     for(const id of ['selectMedia','layerX','layerY','layerWidth','layerHeight','lockAspect','fitContain','fitCover','fitStretch','uploadOverlay','uploadShell','previewPlay'])if(!sourceWidth||invalid)$(id).disabled=true;
     $('selectOverlay').disabled=isBusy()||pending||!overlay||!sourceWidth;
     $('removeOverlay').hidden=!overlay;
@@ -67,6 +73,13 @@ export function createComposer({onChange,onStatus,isBusy}){
   function emit(){render();syncDisabled();onChange()}
   function select(which){if(which!=='media'&&!itemFor(which))return;active=which;$('lockAspect').checked=ratioLocks[active];render()}
   function resetFit(){fitRect('contain','media')}
+  $('originalScale').addEventListener('input',()=>{
+    const percent=Number($('originalScale').value);if(!sourceWidth||!percent||isBusy()||pending)return;
+    const width=Math.round(sourceWidth*percent/100),height=Math.round(sourceHeight*percent/100);
+    const {min,max}=canvasLimits();if(width<min||height<min||width>max||height>max)return;
+    $('ratioSelect').value='original';$('outputWidth').value=width;$('outputHeight').value=height;
+    try{resetFit()}catch{}emit();
+  });
   $('ratioSelect').addEventListener('input',()=>{
     const preset=presets[$('ratioSelect').value];
     if(preset){$('outputWidth').value=preset[0];$('outputHeight').value=preset[1]}
