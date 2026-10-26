@@ -1,5 +1,5 @@
 import { inspectGif, GifSource } from './gif-source.js';
-import { createComposer, paintComposition } from './composition.js?v=10.1';
+import { createComposer, paintComposition } from './composition.js?v=10.2';
 const $ = id => document.getElementById(id);
 const state = {file:null, url:null, mode:"video", gif:null, width:0, height:0, duration:0, busy:false, controller:null, gifUrl:null};
 const video=$('video');
@@ -27,7 +27,7 @@ async function estimateSize(r,opts,key){
   const controller=new AbortController();estimateController=controller;const {signal}=controller;
   let v,worker;
   try{
-    v=await sampler(signal);worker=new Worker(new URL('./encoder-worker.js?v=10.1',import.meta.url),{type:'module'});
+    v=await sampler(signal);worker=new Worker(new URL('./encoder-worker.js?v=10.2',import.meta.url),{type:'module'});
     await workerCall(worker,{type:'init'},signal);
     const count=Math.max(1,Math.ceil(r.duration*opts.fps)),samples=Math.min(5,count);
     const canvas=document.createElement('canvas');canvas.width=opts.width;canvas.height=opts.height;
@@ -111,7 +111,7 @@ for(const name of ['dragenter','dragover'])$('dropzone').addEventListener(name,e
 $('cancelBtn').onclick=()=>state.controller?.abort();
 function workerCall(worker,data,signal,transfer=[]){return new Promise((resolve,reject)=>{const cleanup=()=>{clearTimeout(timer);worker.removeEventListener('message',message);worker.removeEventListener('error',error);signal.removeEventListener('abort',abort)};const message=e=>{cleanup();if(e.data.type==='error')reject(new Error(e.data.message));else resolve(e.data)};const error=e=>{cleanup();reject(new Error(e.message||'GIF 编码器无法启动，请刷新后重试。'))};const abort=()=>{cleanup();reject(abortError())};const timer=setTimeout(()=>{cleanup();reject(new Error('编码超时，请缩短片段或减小画面尺寸。'))},90000);worker.addEventListener('message',message,{once:true});worker.addEventListener('error',error,{once:true});signal.addEventListener('abort',abort,{once:true});if(signal.aborted){abort();return}worker.postMessage(data,transfer)})}
 async function encode(v,r,opts,signal){
-  const worker=new Worker(new URL('./encoder-worker.js?v=10.1',import.meta.url),{type:'module'});
+  const worker=new Worker(new URL('./encoder-worker.js?v=10.2',import.meta.url),{type:'module'});
   const canvas=document.createElement('canvas');canvas.width=opts.width;canvas.height=opts.height;
   const ctx=canvas.getContext('2d',{willReadFrequently:true});
   const count=Math.max(1,Math.ceil(r.duration*opts.fps));

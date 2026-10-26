@@ -14,7 +14,7 @@ export function paintComposition(ctx,source,width,height,layout){
 export function createComposer({onChange,onStatus,isBusy}){
   let sourceWidth=0,sourceHeight=0,active='media',pending=false,overlay=null,shell=null;
   let media={x:0,y:0,w:1,h:1};
-  const ratioLocks={media:true,overlay:true,shell:false};
+  const ratioLocks={media:true,overlay:true,shell:true};
   const frame=$('compositionFrame'),viewport=$('stageViewport');
   const controlIds=['ratioSelect','outputWidth','outputHeight','backgroundSelect','selectMedia','selectOverlay','layerX','layerY','layerWidth','layerHeight','lockAspect','fitContain','fitCover','fitStretch','uploadOverlay','overlayInput','removeOverlay','selectShell','uploadShell','shellInput','removeShell','previewPlay'];
   function dimensions(){
@@ -147,8 +147,8 @@ export function createComposer({onChange,onStatus,isBusy}){
         const item={image,url,name:file.name,rect:{x:0,y:0,w:1,h:1}};url=null;
         if(type==='shell')shell=item;else overlay=item;
         $(type+'Preview').src=item.url;$(type+'Name').textContent=file.name;$('upload'+cap).textContent='↻ 更换 '+label;
-        ratioLocks[type]=type!=='shell';select(type);fitRect(type==='shell'?'stretch':'contain');
-        onStatus(type==='shell'?'PNG 外壳已盖在最上方，可自由拉伸宽高；透明区域露出下方视频和叠图':'PNG 叠图已添加，可独立调整位置和大小');
+        ratioLocks[type]=true;select(type);fitRect('contain');
+        onStatus(type==='shell'?'PNG 外壳已按原始比例居中显示；取消「等比缩放」可自由拉伸宽高，透明区域露出下方画面':'PNG 叠图已添加，可独立调整位置和大小');
       }catch(e){onStatus('PNG 读取失败：'+e.message,true)}
       finally{if(url)URL.revokeObjectURL(url);pending=false;emit()}
     };

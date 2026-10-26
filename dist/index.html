@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f7f8fa"><meta name="description" content="在浏览器本地将视频抽帧转为 GIF，支持视频转 GIF 和 GIF 转 GIF，支持自定义导出画布、拖拽缩放素材、PNG 叠图及文件大小预估。"><title>GIF转换器</title><link rel="stylesheet" href="./style.css?v=10.1"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f7f8fa"><meta name="description" content="在浏览器本地将视频抽帧转为 GIF，支持视频转 GIF 和 GIF 转 GIF，支持自定义导出画布、拖拽缩放素材、PNG 叠图及文件大小预估。"><title>GIF转换器</title><link rel="stylesheet" href="./style.css?v=10.2"></head>
 <body>
 <main>
 <h1 class="app-title">GIF转换器</h1><div class="mode-tabs" role="group" aria-label="转换模式"><button id="videoMode" class="selected" aria-pressed="true">视频转 GIF</button><button id="gifMode" aria-pressed="false">GIF 转 GIF</button></div>
@@ -13,7 +13,7 @@
 <h3 id="uploadTitle">把视频拖到这里</h3><p id="uploadSubtitle">或者点击选择一个视频，开始创作</p><button id="chooseBtn" class="primary small">＋ 选择视频</button><span id="uploadHint" class="upload-hint">MP4、MOV、WebM · 兼容性取决于浏览器解码支持</span>
 </div>
 <div id="videoArea" hidden>
-<section class="shell-panel"><h3>PNG 图片外壳 <span>顶层</span></h3><p>盖在视频 / GIF 上方，透明部分露出下方画面；可独立移动、自由拉伸宽高。</p><div class="overlay-upload"><input id="shellInput" type="file" accept="image/png,.png" hidden><div><button id="uploadShell" class="secondary-btn">＋ 上传 PNG 外壳</button><span id="shellName" class="subtle">透明区域露出下方视频 / GIF</span></div><button id="removeShell" class="text-btn" hidden>移除外壳 ×</button></div></section>
+<section class="shell-panel"><h3>PNG 图片外壳 <span>顶层</span></h3><p>导入时保持图片原始比例并居中显示，透明部分露出下方画面；取消「等比缩放」可自由拉伸宽高。</p><div class="overlay-upload"><input id="shellInput" type="file" accept="image/png,.png" hidden><div><button id="uploadShell" class="secondary-btn">＋ 上传 PNG 外壳</button><span id="shellName" class="subtle">透明区域露出下方视频 / GIF</span></div><button id="removeShell" class="text-btn" hidden>移除外壳 ×</button></div></section>
 <div class="video-stage" id="stageViewport"><div id="compositionFrame" class="composition-frame" aria-label="导出画布预览">
 <div id="mediaLayer" class="composition-layer selected" data-layer="media"><video id="video" playsinline preload="metadata"></video><img id="sourceGifPreview" alt="GIF 动画素材" hidden><span class="resize-handle nw" data-corner="nw"></span><span class="resize-handle ne" data-corner="ne"></span><span class="resize-handle se" data-corner="se"></span><span class="resize-handle sw" data-corner="sw"></span></div>
 <div id="overlayLayer" class="composition-layer overlay-layer" data-layer="overlay" hidden><img id="overlayPreview" alt="PNG 上层叠图"><span class="resize-handle nw" data-corner="nw"></span><span class="resize-handle ne" data-corner="ne"></span><span class="resize-handle se" data-corner="se"></span><span class="resize-handle sw" data-corner="sw"></span><span class="resize-handle n" data-corner="n"></span><span class="resize-handle e" data-corner="e"></span><span class="resize-handle s" data-corner="s"></span><span class="resize-handle w" data-corner="w"></span></div><div id="shellLayer" class="composition-layer shell-layer" data-layer="shell" hidden><img id="shellPreview" alt="PNG 图片外壳"><span class="resize-handle nw" data-corner="nw"></span><span class="resize-handle ne" data-corner="ne"></span><span class="resize-handle se" data-corner="se"></span><span class="resize-handle sw" data-corner="sw"></span><span class="resize-handle n" data-corner="n"></span><span class="resize-handle e" data-corner="e"></span><span class="resize-handle s" data-corner="s"></span><span class="resize-handle w" data-corner="w"></span></div>
@@ -35,5 +35,5 @@
 </div>
 <section id="result" class="result" hidden><div class="panel-title"><h2><span class="step">03</span> 你的 GIF 已就绪</h2><span class="success-tag">✓ 转换完成</span></div><div class="result-content"><div class="gif-background"><img id="gifPreview" alt="生成的 GIF 预览"></div><div class="result-details"><div class="eyebrow">READY TO SHARE</div><h3>精彩，现在可以循环了。</h3><p id="resultMeta"></p><p id="outputNote" class="hint"></p><a id="downloadBtn" class="primary" download="framegif.gif">↓ 下载 GIF</a></div></div></section>
 </main>
-<script type="module" src="./app.js?v=10.1"></script>
+<script type="module" src="./app.js?v=10.2"></script>
 </body></html>
