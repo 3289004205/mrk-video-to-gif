@@ -17,9 +17,11 @@ export function createComposer({onChange,onStatus,isBusy}){
   const ratioLocks={media:true,overlay:true,shell:true};
   const frame=$('compositionFrame'),viewport=$('stageViewport');
   const controlIds=['ratioSelect','outputWidth','outputHeight','backgroundSelect','selectMedia','selectOverlay','layerX','layerY','layerWidth','layerHeight','lockAspect','fitContain','fitCover','fitStretch','uploadOverlay','overlayInput','removeOverlay','selectShell','uploadShell','shellInput','removeShell','previewPlay'];
+  function canvasLimits(){return {min:Math.min(32,sourceWidth||32,sourceHeight||32),max:Math.max(1920,sourceWidth,sourceHeight)}}
   function dimensions(){
     const width=Number($('outputWidth').value),height=Number($('outputHeight').value);
-    if(!Number.isInteger(width)||!Number.isInteger(height)||width<32||height<32||width>1920||height>1920)throw new Error('画布宽高需为 32–1920 的整数。');
+    const {min,max}=canvasLimits();
+    if(!Number.isInteger(width)||!Number.isInteger(height)||width<min||height<min||width>max||height>max)throw new Error(`画布宽高需为 ${min}–${max} 的整数。`);
     return {width,height};
   }
   function itemFor(which){return which==='shell'?shell:which==='overlay'?overlay:null}
@@ -69,8 +71,7 @@ export function createComposer({onChange,onStatus,isBusy}){
     const preset=presets[$('ratioSelect').value];
     if(preset){$('outputWidth').value=preset[0];$('outputHeight').value=preset[1]}
     else if($('ratioSelect').value==='original'){
-      let w=480,h=Math.round(w*(sourceHeight||270)/(sourceWidth||480));if(h>1920){w=Math.round(w*1920/h);h=1920}
-      $('outputWidth').value=clamp(w,32,1920);$('outputHeight').value=clamp(h,32,1920);
+      $('outputWidth').value=sourceWidth||480;$('outputHeight').value=sourceHeight||270;
     }
     try{resetFit()}catch{}emit();
   });
@@ -79,7 +80,8 @@ export function createComposer({onChange,onStatus,isBusy}){
     if(ratio!=='custom'){
       const pair=presets[ratio]||[sourceWidth||480,sourceHeight||270];
       const value=Number($(id).value);
-      if(Number.isInteger(value)&&value>=32&&value<=1920){
+      const {min,max}=canvasLimits();
+      if(Number.isInteger(value)&&value>=min&&value<=max){
         if(id==='outputWidth')$('outputHeight').value=Math.round(value*pair[1]/pair[0]);
         else $('outputWidth').value=Math.round(value*pair[0]/pair[1]);
       }
@@ -175,9 +177,11 @@ export function createComposer({onChange,onStatus,isBusy}){
     setSource(width,height,isGif){
       sourceWidth=width;sourceHeight=height;select('media');
       $('previewPlay').hidden=!!isGif;
+      const {min,max}=canvasLimits();
+      for(const id of ['outputWidth','outputHeight']){$(id).min=min;$(id).max=max}
+      $('canvasSizeHint').textContent=`导出为此固定宽高，每边支持 ${min}–${max} px；默认使用素材原始尺寸。`;
       if(width&&$('ratioSelect').value==='original'){
-        let w=480,h=Math.round(w*height/width);if(h>1920){w=Math.round(w*1920/h);h=1920}
-        $('outputWidth').value=clamp(w,32,1920);$('outputHeight').value=clamp(h,32,1920);
+        $('outputWidth').value=width;$('outputHeight').value=height;
       }
       try{resetFit()}catch{}render();syncDisabled();
     },
