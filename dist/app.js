@@ -1,5 +1,5 @@
 import { inspectGif, GifSource } from './gif-source.js';
-import { createComposer, paintComposition } from './composition.js?v=7';
+import { createComposer, paintComposition } from './composition.js?v=10.1';
 const $ = id => document.getElementById(id);
 const state = {file:null, url:null, mode:"video", gif:null, width:0, height:0, duration:0, busy:false, controller:null, gifUrl:null};
 const video=$('video');
@@ -27,7 +27,7 @@ async function estimateSize(r,opts,key){
   const controller=new AbortController();estimateController=controller;const {signal}=controller;
   let v,worker;
   try{
-    v=await sampler(signal);worker=new Worker(new URL('./encoder-worker.js?v=7',import.meta.url),{type:'module'});
+    v=await sampler(signal);worker=new Worker(new URL('./encoder-worker.js?v=10.1',import.meta.url),{type:'module'});
     await workerCall(worker,{type:'init'},signal);
     const count=Math.max(1,Math.ceil(r.duration*opts.fps)),samples=Math.min(5,count);
     const canvas=document.createElement('canvas');canvas.width=opts.width;canvas.height=opts.height;
@@ -111,7 +111,7 @@ for(const name of ['dragenter','dragover'])$('dropzone').addEventListener(name,e
 $('cancelBtn').onclick=()=>state.controller?.abort();
 function workerCall(worker,data,signal,transfer=[]){return new Promise((resolve,reject)=>{const cleanup=()=>{clearTimeout(timer);worker.removeEventListener('message',message);worker.removeEventListener('error',error);signal.removeEventListener('abort',abort)};const message=e=>{cleanup();if(e.data.type==='error')reject(new Error(e.data.message));else resolve(e.data)};const error=e=>{cleanup();reject(new Error(e.message||'GIF 编码器无法启动，请刷新后重试。'))};const abort=()=>{cleanup();reject(abortError())};const timer=setTimeout(()=>{cleanup();reject(new Error('编码超时，请缩短片段或减小画面尺寸。'))},90000);worker.addEventListener('message',message,{once:true});worker.addEventListener('error',error,{once:true});signal.addEventListener('abort',abort,{once:true});if(signal.aborted){abort();return}worker.postMessage(data,transfer)})}
 async function encode(v,r,opts,signal){
-  const worker=new Worker(new URL('./encoder-worker.js?v=7',import.meta.url),{type:'module'});
+  const worker=new Worker(new URL('./encoder-worker.js?v=10.1',import.meta.url),{type:'module'});
   const canvas=document.createElement('canvas');canvas.width=opts.width;canvas.height=opts.height;
   const ctx=canvas.getContext('2d',{willReadFrequently:true});
   const count=Math.max(1,Math.ceil(r.duration*opts.fps));
@@ -137,7 +137,7 @@ $('generateBtn').onclick=async()=>{
     state.gifUrl=URL.createObjectURL(new Blob([output.bytes],{type:'image/gif'}));$('gifPreview').src=state.gifUrl;$('downloadBtn').href=state.gifUrl;
     $('downloadBtn').download=state.file.name.replace(/\.[^.]+$/,'')+'_'+r.start+'-'+r.end+'.gif';
     $('resultMeta').textContent=`实际大小 ${mb(output.size)} · ${opts.width} × ${opts.height} px · ${output.count} 帧 · ${(1000/output.delay).toFixed(1)} FPS`;
-    const delta=(1-output.size/state.file.size)*100;$('outputNote').textContent=state.gif?`原文件 ${mb(state.file.size)} → ${mb(output.size)} · ${delta>=0?'减小 '+delta.toFixed(1)+'%':'增大 '+(-delta).toFixed(1)+'%'}，${opts.colors} 色，包含画布构图及 PNG 叠图。`:'已按画布宽高导出，包含素材的位置、拉伸效果及 PNG 叠图。';
+    const delta=(1-output.size/state.file.size)*100;$('outputNote').textContent=state.gif?`原文件 ${mb(state.file.size)} → ${mb(output.size)} · ${delta>=0?'减小 '+delta.toFixed(1)+'%':'增大 '+(-delta).toFixed(1)+'%'}，${opts.colors} 色，包含画布构图及 PNG 外壳、叠图。`:'已按画布宽高导出，包含素材的位置、拉伸效果及 PNG 外壳、叠图。';
     estimateKey=JSON.stringify([state.url,r.start,r.end,opts.width,opts.height,opts.fps,opts.colors,composer.key()]);$('sizeEstimate').textContent=mb(output.size);$('estimateHint').textContent='本次导出的实际文件大小';
     $('result').hidden=false;progress(100,'转换完成，GIF 已就绪');$('result').scrollIntoView({behavior:'smooth',block:'nearest'});
   }catch(e){status(e.name==='AbortError'?'已取消，可以调整参数后重试':e.message,e.name!=='AbortError')}
