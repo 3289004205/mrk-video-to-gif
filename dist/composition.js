@@ -17,7 +17,8 @@ export function createComposer({onChange,onStatus,isBusy}){
   const ratioLocks={media:true,overlay:true,shell:true};
   const frame=$('compositionFrame'),viewport=$('stageViewport');
   const controlIds=['ratioSelect','outputWidth','outputHeight','backgroundSelect','selectMedia','selectOverlay','layerX','layerY','layerWidth','layerHeight','lockAspect','fitContain','fitCover','fitStretch','uploadOverlay','overlayInput','removeOverlay','selectShell','uploadShell','shellInput','removeShell','previewPlay'];
-  function canvasLimits(){return {min:Math.min(32,sourceWidth||32,sourceHeight||32),max:Math.max(1920,sourceWidth,sourceHeight)}}
+  function defaultSize(){return {width:790,height:Math.max(1,Math.round(790*(sourceHeight||9)/(sourceWidth||16)))}}
+  function canvasLimits(){const d=defaultSize();return {min:Math.min(32,sourceWidth||32,sourceHeight||32,d.height),max:Math.max(1920,sourceWidth,sourceHeight,d.height)}}
   function dimensions(){
     const width=Number($('outputWidth').value),height=Number($('outputHeight').value);
     const {min,max}=canvasLimits();
@@ -83,6 +84,9 @@ export function createComposer({onChange,onStatus,isBusy}){
   $('ratioSelect').addEventListener('input',()=>{
     const preset=presets[$('ratioSelect').value];
     if(preset){$('outputWidth').value=preset[0];$('outputHeight').value=preset[1]}
+    else if($('ratioSelect').value==='default790'){
+      const d=defaultSize();$('outputWidth').value=d.width;$('outputHeight').value=d.height;
+    }
     else if($('ratioSelect').value==='original'){
       $('outputWidth').value=sourceWidth||480;$('outputHeight').value=sourceHeight||270;
     }
@@ -192,8 +196,10 @@ export function createComposer({onChange,onStatus,isBusy}){
       $('previewPlay').hidden=!!isGif;
       const {min,max}=canvasLimits();
       for(const id of ['outputWidth','outputHeight']){$(id).min=min;$(id).max=max}
-      $('canvasSizeHint').textContent=`导出为此固定宽高，每边支持 ${min}–${max} px；默认使用素材原始尺寸。`;
-      if(width&&$('ratioSelect').value==='original'){
+      $('canvasSizeHint').textContent=`默认宽度 790 px，高度按素材原始比例自适应；每边支持 ${min}–${max} px。`;
+      if(width&&$('ratioSelect').value==='default790'){
+        const d=defaultSize();$('outputWidth').value=d.width;$('outputHeight').value=d.height;
+      }else if(width&&$('ratioSelect').value==='original'){
         $('outputWidth').value=width;$('outputHeight').value=height;
       }
       try{resetFit()}catch{}render();syncDisabled();
