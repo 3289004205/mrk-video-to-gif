@@ -806,4 +806,5 @@ function GifReaderLZWOutputIndexStream(code_stream, p, output, output_length) {
 // CommonJS.
 try { exports.GifWriter = GifWriter; exports.GifReader = GifReader } catch(e) {}
 
-export { GifReader };
+// Expose the bundled writer for rectangle-based animation optimization.
+export { GifReader, GifWriter };

@@ -54,3 +54,15 @@ test('fully transparent samples remain encodable without inventing visible pixel
   const indexed=createColorMapper(buildPalette(histogram,255),true)(input,16,16);
   assert(indexed.every(i=>i===0));
 });
+
+test('balanced ordered dithering is anchored to the image and preserves exact palette colors',()=>{
+  const width=24,height=16,palette=[[0,0,0],[100,101,102],[255,255,255]],input=new Uint8Array(width*height*4);
+  for(let i=0;i<width*height;i++)input.set([125,125,125,255],i*4);
+  input.set([100,101,102,255],0);
+  const mapper=createColorMapper(palette,false,{mode:'ordered',reserveTransparent:true});
+  const original=mapper(input,width,height);assert.equal(original[0],2);
+  const changed=input.slice();changed.set([245,245,245,255],4*13);
+  const next=mapper(changed,width,height);
+  for(let i=0;i<original.length;i++)if(i!==13)assert.equal(original[i],next[i]);
+  assert(original.every(index=>index>0));
+});

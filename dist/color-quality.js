@@ -66,10 +66,25 @@ export function buildPalette(histogram,budget){
   }
   return Array.from(new Map(palette.map(c=>[colorKey(c),c])).values()).sort((a,b)=>colorKey(a)-colorKey(b));
 }
-export function createColorMapper(palette,transparent){
-  const nearest=nearestLookup(palette),offset=transparent?1:0;
+const bayer=[0,48,12,60,3,51,15,63,32,16,44,28,35,19,47,31,8,56,4,52,11,59,7,55,40,24,36,20,43,27,39,23,2,50,14,62,1,49,13,61,34,18,46,30,33,17,45,29,10,58,6,54,9,57,5,53,42,26,38,22,41,25,37,21];
+export function createColorMapper(palette,transparent,{mode='diffusion',reserveTransparent=false}={}){
+  const nearest=nearestLookup(palette),offset=transparent||reserveTransparent?1:0;
   return (pixels,width,height)=>{
     const indexed=new Uint8Array(width*height);
+    if(mode!=='diffusion'){
+      const strength=Math.min(36,12*Math.cbrt(256/palette.length));
+      for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+        const i=y*width+x,at=i*4;if(transparent&&pixels[at+3]<128)continue;
+        const r=pixels[at],g=pixels[at+1],b=pixels[at+2];let match=nearest(r,g,b);
+        if(mode==='ordered'&&(palette[match][0]!==r||palette[match][1]!==g||palette[match][2]!==b)){
+          const delta=((bayer[(y%8)*8+x%8]+.5)/64-.5)*strength*2;
+          const adjust=v=>Math.round(Math.max(0,Math.min(255,v+delta)));
+          match=nearest(adjust(r),adjust(g),adjust(b));
+        }
+        indexed[i]=match+offset;
+      }
+      return indexed;
+    }
     let row=new Float32Array((width+2)*3),next=new Float32Array(row.length);
     const opaque=(x,y)=>x>=0&&x<width&&y<height&&(!transparent||pixels[(y*width+x)*4+3]>=128);
     const spread=(target,x,y,factor,er,eg,eb)=>{if(!opaque(x,y))return;const at=(x+1)*3;target[at]+=er*factor;target[at+1]+=eg*factor;target[at+2]+=eb*factor};
